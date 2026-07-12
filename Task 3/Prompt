@@ -1,0 +1,8 @@
+not known person is dawood and zahoor is still in dept with 1000 rs so if zahoor paid 1000 it will not count in current scenario but if zahoor paid more than 1000 then deduct it extra from current scenario and showed me results of who paid completely and who is left with total amount
+you can take this data
+
+2025-10-10	Ahmed	1,000	Ground
+2025-10-10	0345-XXXX789	1,000	(No Memo)
+2025-10-11	Bilal	1,000	for ground booking
+2025-10-11	Zahoor	1,000	old balance clearance
+2025-10-12	Ehtesham	1,000	ground dues
