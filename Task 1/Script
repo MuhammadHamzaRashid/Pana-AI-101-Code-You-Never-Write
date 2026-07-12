@@ -1,0 +1,42 @@
+import pandas as pd
+import re
+from io import StringIO
+
+def analyze_statement(data):
+    # 1. Load data, skip original header rows and clean numeric columns
+    df = pd.read_csv(StringIO(data))
+    df['Debit'] = pd.to_numeric(df['Debit'], errors='coerce').fillna(0)
+    df['Booking Date'] = pd.to_datetime(df['Booking Date'], format='%d-%b-%y')
+
+    # 2. Clean Description (Normalize)
+    # This removes unique IDs, STAN numbers, and dates so we can find patterns
+    def clean_desc(text):
+        text = re.sub(r'STAN\s*\(?\d+\)?', '', text) # Remove STAN numbers
+        text = re.sub(r'\d{10,}', '', text)          # Remove long ID strings
+        text = re.sub(r'PK\d+[A-Z0-9]+', '', text)   # Remove Bank Account numbers
+        return text.strip()
+
+    df['Clean_Desc'] = df['Description'].apply(clean_desc)
+
+    # --- ANALYSIS 1: DUPLICATES (Same day, Same amount, Same cleaned desc) ---
+    duplicates = df[df.duplicated(subset=['Booking Date', 'Debit', 'Clean_Desc'], keep=False) & (df['Debit'] > 0)]
+
+    # --- ANALYSIS 2: RECURRING / SUBSCRIPTIONS ---
+    # Group by description and amount. If it happens more than once, it's recurring.
+    recurring = df[df['Debit'] > 0].groupby(['Clean_Desc', 'Debit']).filter(lambda x: len(x) > 1)
+
+    print("--- POTENTIAL DUPLICATE PAYMENTS ---")
+    if not duplicates.empty:
+        print(duplicates[['Booking Date', 'Description', 'Debit']])
+    else:
+        print("None found.")
+
+    print("\n--- RECURRING CHARGES / POTENTIAL SUBSCRIPTIONS ---")
+    if not recurring.empty:
+        # Sort to show them together
+        summary = recurring.sort_values(by='Clean_Desc')
+        print(summary[['Booking Date', 'Description', 'Debit']])
+    else:
+        print("None found.")
+
+analyze_statement(csv_data)
